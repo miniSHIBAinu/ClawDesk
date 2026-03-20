@@ -1,0 +1,188 @@
+# ============================================
+# ClawDesk .gitignore
+# Security-first: block ALL sensitive files
+# ============================================
+
+# ==========================================
+# 1. ENVIRONMENT & CREDENTIALS (CRITICAL)
+# ==========================================
+.env
+.env.*
+!.env.example
+*.env
+.env.local
+.env.development
+.env.production
+.env.staging
+
+# ==========================================
+# 2. AI AGENT / ASSISTANT FOLDERS
+# ==========================================
+.agent/
+.agents/
+.claude/
+.gemini/
+.cursor/
+
+# ==========================================
+# 3. CREDENTIALS, KEYS & SECRETS
+# ==========================================
+# SSL/TLS certificates & private keys
+*.pem
+*.key
+*.crt
+*.cer
+*.p12
+*.pfx
+
+# Java/Android keystores
+*.jks
+*.keystore
+*.keystore.properties
+
+# Service account keys (Google, Firebase, GCP)
+serviceAccountKey*.json
+*-service-account*.json
+*-firebase-adminsdk*.json
+google-services.json
+GoogleService-Info.plist
+
+# Firebase
+firebase*.json
+!firebase.json
+.firebase/
+firebaserc
+
+# Supabase local
+.supabase/
+supabase/.temp/
+
+# Auth tokens & secrets
+*.token
+*.secret
+*_credentials.json
+client_secret*.json
+
+# ==========================================
+# 4. BINARY & MEDIA FILES
+# ==========================================
+# Mobile app packages
+*.apk
+*.aab
+*.ipa
+*.dSYM.zip
+*.xcarchive
+
+# Video files
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.wmv
+*.flv
+*.webm
+*.m4v
+
+# Audio files
+*.mp3
+*.wav
+*.flac
+*.aac
+*.ogg
+*.m4a
+
+# Large image files
+*.psd
+*.ai
+*.sketch
+
+# Archives
+*.tar.gz
+*.zip
+*.rar
+*.7z
+
+# ==========================================
+# 5. PYTHON
+# ==========================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+*.egg
+dist/
+build/
+eggs/
+*.whl
+pip-log.txt
+pip-delete-this-directory.txt
+.Python
+venv/
+env/
+.venv/
+ENV/
+
+# ==========================================
+# 6. NODE.JS
+# ==========================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn/cache
+.pnp.*
+package-lock.json
+yarn.lock
+
+# ==========================================
+# 7. BUILD & OUTPUT
+# ==========================================
+dist/
+build/
+out/
+.next/
+.vercel/
+.output/
+*.min.js
+*.min.css
+*.map
+
+# ==========================================
+# 8. IDE & OS FILES
+# ==========================================
+# VS Code
+.vscode/settings.json
+.vscode/launch.json
+.vscode/*.code-workspace
+
+# JetBrains
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# OS
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+*.swp
+*.swo
+*~
+
+# ==========================================
+# 9. LOGS & TEMP
+# ==========================================
+*.log
+logs/
+tmp/
+temp/
+.cache/
+.tmp/
+
+# ==========================================
+# 10. DOCKER (optional local files)
+# ==========================================
+docker-compose.override.yml
