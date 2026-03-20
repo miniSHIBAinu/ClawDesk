@@ -3,9 +3,13 @@ Database helper module for Supabase PostgreSQL
 Provides clean separation of DB operations
 """
 
+# CRITICAL: Disable Supabase Realtime BEFORE import — blocks on Windows/Python 3.13
 import os
+os.environ.setdefault("SUPABASE_REALTIME_URL", "")
+
 from typing import Optional, Dict, Any, List
 from supabase import create_client, Client
+from supabase.lib.client_options import ClientOptions
 from jose import jwt, JWTError
 from fastapi import HTTPException, Header
 from datetime import datetime
@@ -19,6 +23,12 @@ SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "")
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "")
 SUPABASE_JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET", "")
 
+# Disable Realtime WebSocket — blocks on Windows/Python 3.13
+_client_options = ClientOptions(
+    auto_refresh_token=True,
+    persist_session=False,
+)
+
 
 def get_supabase() -> Client:
     """Get Supabase client with service_role key (for backend operations)"""
@@ -26,7 +36,7 @@ def get_supabase() -> Client:
     if _supabase_service is None:
         if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
             raise ValueError("SUPABASE_URL and SUPABASE_SERVICE_KEY must be set in environment")
-        _supabase_service = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+        _supabase_service = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY, options=_client_options)
     return _supabase_service
 
 
@@ -36,7 +46,7 @@ def get_supabase_anon() -> Client:
     if _supabase_anon is None:
         if not SUPABASE_URL or not SUPABASE_ANON_KEY:
             raise ValueError("SUPABASE_URL and SUPABASE_ANON_KEY must be set in environment")
-        _supabase_anon = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
+        _supabase_anon = create_client(SUPABASE_URL, SUPABASE_ANON_KEY, options=_client_options)
     return _supabase_anon
 
 
