@@ -1,4 +1,5 @@
 @echo off
+setlocal enabledelayedexpansion
 REM ============================================
 REM ClawDesk Server Launcher
 REM Load environment from .env.dev and start server
@@ -12,11 +13,10 @@ if not exist ".env.dev" (
     exit /b 1
 )
 
-REM Load env vars from .env.dev
-for /f "usebackq tokens=1,* delims==" %%A in (".env.dev") do (
-    set "line=%%A"
-    if not "!line:~0,1!"=="#" (
-        if not "%%A"=="" set "%%A=%%B"
+REM Load env vars from .env.dev (skip comments and empty lines)
+for /f "usebackq eol=# tokens=1,* delims==" %%A in (".env.dev") do (
+    if not "%%A"=="" if not "%%B"=="" (
+        set "%%A=%%B"
     )
 )
 
