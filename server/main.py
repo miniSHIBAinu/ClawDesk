@@ -15,6 +15,36 @@ import httpx
 import os
 import uuid
 import json
+import hashlib
+import hmac
+import time
+from collections import defaultdict
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import JSONResponse
+
+
+# === SECURITY: Rate Limiter ===
+class RateLimitMiddleware(BaseHTTPMiddleware):
+    """Simple in-memory rate limiter — 60 requests/min per IP"""
+    def __init__(self, app, max_requests: int = 60, window_seconds: int = 60):
+        super().__init__(app)
+        self.max_requests = max_requests
+        self.window = window_seconds
+        self.requests = defaultdict(list)
+
+    async def dispatch(self, request, call_next):
+        # Skip rate limiting for webhooks (Facebook/Zalo send bursts)
+        if "/api/webhook/" in str(request.url.path):
+            return await call_next(request)
+        client_ip = request.client.host if request.client else "unknown"
+        now = time.time()
+        # Clean old entries
+        self.requests[client_ip] = [t for t in self.requests[client_ip] if now - t < self.window]
+        if len(self.requests[client_ip]) >= self.max_requests:
+            return JSONResponse({"error": "Rate limit exceeded. Try again later."}, status_code=429)
+        self.requests[client_ip].append(now)
+        return await call_next(request)
+
 
 # Import database helpers
 from server.db import (
@@ -118,12 +148,23 @@ PLAN_LIMITS = {
 
 app = FastAPI(title="AI Agent Platform", version="2.0")
 
+# === SECURITY: CORS — restrict to known origins ===
+ALLOWED_ORIGINS = [
+    "https://clawdesk-eight.vercel.app",
+    "https://clawdesk.vercel.app",
+    "http://localhost:8080",
+    "http://127.0.0.1:8080",
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# === SECURITY: Rate limiting — 60 req/min per IP ===
+app.add_middleware(RateLimitMiddleware, max_requests=60, window_seconds=60)
 
 # === STATIC FILES ===
 STATIC_DIR = pathlib.Path(__file__).parent.parent / "static"
@@ -1999,9 +2040,24 @@ async def setup_telegram_webhook(agent_id: str, user=Depends(get_current_user)):
 # === ZALO OA WEBHOOK ===
 
 @app.post("/api/webhook/zalo/{agent_id}")
-async def zalo_webhook(agent_id: str, body: dict = Body(...)):
-    """Receive Zalo OA webhook events"""
+async def zalo_webhook(agent_id: str, request: Request, body: dict = Body(...)):
+    """Receive Zalo OA webhook events (with MAC verification)"""
     try:
+        # === SECURITY: Verify Zalo webhook MAC signature ===
+        mac = body.get("mac", "")
+        if mac:
+            channel = get_channel(agent_id, "zalo")
+            oa_secret = channel.get("config", {}).get("oa_secret_key", "") if channel else ""
+            if oa_secret:
+                # Zalo uses HMAC-SHA256: mac = hmac(oa_secret, data_without_mac)
+                data_to_verify = {k: v for k, v in body.items() if k != "mac"}
+                expected_mac = hmac.new(
+                    oa_secret.encode(), json.dumps(data_to_verify, separators=(',', ':')).encode(), hashlib.sha256
+                ).hexdigest()
+                if not hmac.compare_digest(mac, expected_mac):
+                    print(f"Zalo webhook MAC mismatch for agent {agent_id}")
+                    return {"status": "invalid_mac"}
+
         event_name = body.get("event_name", "")
         
         if event_name == "user_send_text":
