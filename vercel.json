@@ -1,0 +1,38 @@
+{
+    "version": 2,
+    "builds": [
+        {
+            "src": "api/index.py",
+            "use": "@vercel/python",
+            "config": {
+                "maxLambdaSize": "50mb",
+                "runtime": "python3.12"
+            }
+        },
+        {
+            "src": "static/**",
+            "use": "@vercel/static"
+        }
+    ],
+    "routes": [
+        {
+            "src": "/static/(.*)",
+            "dest": "/static/$1"
+        },
+        {
+            "src": "/dashboard",
+            "dest": "/static/dashboard.html"
+        },
+        {
+            "src": "/widget.js",
+            "dest": "/static/widget.js"
+        },
+        {
+            "src": "/(.*)",
+            "dest": "/api/index.py"
+        }
+    ],
+    "env": {
+        "SUPABASE_REALTIME_URL": ""
+    }
+}
